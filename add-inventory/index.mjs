@@ -22,26 +22,27 @@ export async function handler(event) {
 
     // Prepare the item to insert into DynamoDB
     const params = {
-        TableName: 'inventory', // DynamoDB table name
+        TableName: 'inventory-v2', // DynamoDB table name
         Item: {
             Name: { S: Name },
             Category: { S: Category },
             Description: { S: Description },
             Cost: { N: Cost.toString() }, // Cost should be a number, converting it to string
             Quantity: { N: Quantity.toString() }, // Quantity should be a number, converting it to string
-            Timestamp: { S: new Date().toISOString() }, // Add a timestamp field for reference
         },
     };
 
     // Upload the item to DynamoDB
     const command = new PutItemCommand(params);
 
+    let result;
     try {
-        const result = await dynamoDbClient.send(command);
+        result = await dynamoDbClient.send(command);
         return {
             statusCode: 200,
             body: JSON.stringify({
                 message: 'Item successfully uploaded to inventory!',
+                returned: result
             }),
         };
     } catch (err) {
@@ -54,15 +55,4 @@ export async function handler(event) {
             }),
         };
     }
-
-    /*
-    // Return a success response
-    return {
-        statusCode: 200,
-        body: JSON.stringify({
-            message: 'Item successfully uploaded to inventory!',
-            item: { Name, Category, Description, Cost, Quantity },
-        }),
-    };
-    */
 }
