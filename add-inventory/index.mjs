@@ -7,10 +7,10 @@ const dynamoDbClient = new DynamoDBClient({ region: 'us-east-1' }); // Update wi
 export async function handler(event) {
     const body = JSON.parse(event.body);
 
-    const { Name, Category, Description, Cost, Quantity } = body;
+    const { name, category, description, cost, quantity } = body;
 
     // Validate that all required fields are present
-    if (!Name || !Category || !Description || !Cost || !Quantity) {
+    if (!name || !category || !description || !cost || !quantity) {
         return {
             statusCode: 400,
             body: JSON.stringify({
@@ -22,13 +22,13 @@ export async function handler(event) {
 
     // Prepare the item to insert into DynamoDB
     const params = {
-        TableName: 'inventory-v2', // DynamoDB table name
+        TableName: 'inventory', // DynamoDB table name
         Item: {
-            Name: { S: Name },
-            Category: { S: Category },
-            Description: { S: Description },
-            Cost: { N: Cost.toString() }, // Cost should be a number, converting it to string
-            Quantity: { N: Quantity.toString() }, // Quantity should be a number, converting it to string
+            name: { S: name },
+            category: { S: category },
+            description: { S: description },
+            cost: { N: cost.toString() }, // Cost should be a number, converting it to string
+            quantity: { N: quantity.toString() }, // Quantity should be a number, converting it to string
         },
     };
 
@@ -38,6 +38,14 @@ export async function handler(event) {
     let result;
     try {
         result = await dynamoDbClient.send(command);
+        const params2 = {
+            TableName: 'catalog', // DynamoDB table name
+            Item: {
+                name: { S: name },
+            },
+        };
+        const command2 = new PutItemCommand(params2);
+        result = await dynamoDbClient.send(command2);
         return {
             statusCode: 200,
             body: JSON.stringify({
