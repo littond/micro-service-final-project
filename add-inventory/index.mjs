@@ -7,10 +7,10 @@ const dynamoDbClient = new DynamoDBClient({ region: 'us-east-1' }); // Update wi
 export async function handler(event) {
     const body = JSON.parse(event.body);
 
-    const { name, category, description, cost, quantity } = body;
+    const { product, category, description, cost, quantity } = body;
 
     // Validate that all required fields are present
-    if (!name || !category || !description || !cost || !quantity) {
+    if (!product || !category || !description || !cost || !quantity) {
         return {
             statusCode: 400,
             body: JSON.stringify({
@@ -24,7 +24,7 @@ export async function handler(event) {
     const params = {
         TableName: 'inventory', // DynamoDB table name
         Item: {
-            name: { S: name },
+            product: { S: product },
             category: { S: category },
             description: { S: description },
             cost: { N: cost.toString() }, // Cost should be a number, converting it to string
@@ -41,7 +41,7 @@ export async function handler(event) {
         const params2 = {
             TableName: 'catalog', // DynamoDB table name
             Item: {
-                name: { S: name },
+                product: { S: product },
             },
         };
         const command2 = new PutItemCommand(params2);

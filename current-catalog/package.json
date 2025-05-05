@@ -8,6 +8,6 @@
     "start": "node index.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.360.0" // AWS SDK for DynamoDB
+    "@aws-sdk/client-dynamodb": "^3.360.0"
   }
 }
