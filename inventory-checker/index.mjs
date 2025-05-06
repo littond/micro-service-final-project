@@ -1,68 +1,45 @@
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'; // Import necessary AWS SDK packages
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
-// Initialize DynamoDB Client
-const dynamoDbClient = new DynamoDBClient({ region: 'us-east-1' }); // Update with your region
+const REGION = process.env.AWS_REGION || 'us-east-1';
+const dynamoDbClient = new DynamoDBClient({ region: REGION });
+const snsClient = new SNSClient({ region: REGION });
+const ARN = 'arn:aws:sns:us-east-1:557690622184:LowInventoryAlerts';
 
-// Lambda handler function
 export async function handler(event) {
-    const body = JSON.parse(event.body);
+    const product = JSON.parse(event.Records[0].body).product;
 
-    const { Name, Category, Description, Cost, Quantity } = body;
-
-    // Validate that all required fields are present
-    if (!Name || !Category || !Description || !Cost || !Quantity) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({
-                message: 'Missing required fields',
-                request: body
-            }),
-        };
-    }
-
-    // Prepare the item to insert into DynamoDB
-    const params = {
-        TableName: 'inventory', // DynamoDB table name
-        Item: {
-            Name: { S: Name },
-            Category: { S: Category },
-            Description: { S: Description },
-            Cost: { N: Cost.toString() }, // Cost should be a number, converting it to string
-            Quantity: { N: Quantity.toString() }, // Quantity should be a number, converting it to string
-            Timestamp: { S: new Date().toISOString() }, // Add a timestamp field for reference
-        },
-    };
-
-    // Upload the item to DynamoDB
-    const command = new PutItemCommand(params);
-
+    // 2) Fetch current stock from DynamoDB
+    let quantity;
     try {
-        const result = await dynamoDbClient.send(command);
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: 'Item successfully uploaded to inventory!',
-            }),
-        };
+        const { Item } = await dynamoDbClient.send(new GetItemCommand({
+            TableName: 'inventory',
+            Key: {
+                product: { S: product }
+            }
+        }));
+        if (!Item || !Item.product) {
+            console.warn(`No stock attribute found for product "${product}", skipping.`);
+        }
+        quantity = parseInt(Item.quantity.N, 10);
     } catch (err) {
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: 'client.send failed',
-                error: err,
-                returned: result
-            }),
-        };
+        console.error(`Error fetching inventory for "${product}":`, err);
     }
 
-    /*
-    // Return a success response
-    return {
-        statusCode: 200,
-        body: JSON.stringify({
-            message: 'Item successfully uploaded to inventory!',
-            item: { Name, Category, Description, Cost, Quantity },
-        }),
-    };
-    */
+    // 3) If stock is below threshold, publish an SNS alert
+    if (quantity < 5) {
+        try {
+            await snsClient.send(new PublishCommand({
+                TopicArn: ARN,
+                Subject: 'Low Inventory Alert',
+                Message: `${product} has low quantity (${quantity} left)`
+            }));
+            console.log(`Low inventory alert sent for "${product}" (stock: ${quantity}).`);
+        } catch (err) {
+            console.error(`Error publishing SNS alert for "${product}":`, err);
+        }
+    }
+
+    // SQS‐triggered Lambdas don't need to return a body, but we return something for safety
+    return { statusCode: 200 };
 }
