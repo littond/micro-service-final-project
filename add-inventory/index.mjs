@@ -25,9 +25,6 @@ export async function handler(event) {
         TableName: 'inventory', // DynamoDB table name
         Item: {
             product: { S: product },
-            category: { S: category },
-            description: { S: description },
-            cost: { N: cost.toString() }, // Cost should be a number, converting it to string
             quantity: { N: quantity.toString() }, // Quantity should be a number, converting it to string
         },
     };
@@ -42,6 +39,9 @@ export async function handler(event) {
             TableName: 'catalog', // DynamoDB table name
             Item: {
                 product: { S: product },
+                category: { S: category },
+                description: { S: description },
+                cost: { N: cost.toString() }, // Cost should be a number, converting it to string
             },
         };
         const command2 = new PutItemCommand(params2);
