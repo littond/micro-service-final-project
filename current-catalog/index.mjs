@@ -3,7 +3,11 @@ import {
     ScanCommand,
     QueryCommand
 } from "@aws-sdk/client-dynamodb";
-
+const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",                           // or your exact origin
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT"
+};
 const client = new DynamoDBClient({ region: "us-east-1" });
 
 export async function handler(event) {
@@ -31,6 +35,7 @@ export async function handler(event) {
 
     return {
         statusCode: 200,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ available: available.filter(x => x) })
     };
 }

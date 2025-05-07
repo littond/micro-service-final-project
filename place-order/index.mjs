@@ -5,6 +5,11 @@ const REGION = 'us-east-1';
 const dynamoDbClient = new DynamoDBClient({ region: REGION });
 const sqsClient = new SQSClient({ region: REGION });
 const URL = 'https://sqs.us-east-1.amazonaws.com/557690622184/inventory-check-queue';
+const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",                           // or your exact origin
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT"
+};
 
 export async function handler(event) {
     let body;
@@ -13,6 +18,7 @@ export async function handler(event) {
     } catch {
         return {
             statusCode: 400,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ message: 'Invalid JSON payload' }),
         };
     }
@@ -22,6 +28,7 @@ export async function handler(event) {
     if (!product || typeof quantity !== 'number') {
         return {
             statusCode: 400,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ message: 'Missing or invalid `product` or `quantity`' }),
         };
     }
@@ -47,6 +54,7 @@ export async function handler(event) {
         console.error('DynamoDB error', dbErr);
         return {
             statusCode: 500,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ message: 'Failed to record order' }),
         };
     }
@@ -66,6 +74,7 @@ export async function handler(event) {
         if (!row.product || !row.quantity) {
             return {
                 statusCode: 404,
+                headers: CORS_HEADERS,
                 body: JSON.stringify({ message: 'Product not found in inventory' })
             };
         }
@@ -75,6 +84,7 @@ export async function handler(event) {
         if (currentStock < quantity) {
             return {
                 statusCode: 409,
+                headers: CORS_HEADERS,
                 body: JSON.stringify({ message: 'Insufficient inventory' })
             };
         }
@@ -97,6 +107,7 @@ export async function handler(event) {
         console.error('Inventory update error:', err);
         return {
             statusCode: 500,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ message: 'Error updating inventory' })
         };
     }
@@ -115,6 +126,7 @@ export async function handler(event) {
         // You might decide whether to treat this as fatal or retry…
         return {
             statusCode: 500,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ message: 'Order recorded but failed to enqueue notification' }),
         };
     }
@@ -122,6 +134,7 @@ export async function handler(event) {
     // 3) Return success
     return {
         statusCode: 200,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ success: true, orderId }),
     };
 }

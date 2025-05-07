@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Service Dashboard</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin-top: 5px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+        }
+
+        input,
+        select {
+            margin: 5px 0;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Service Dashboard</h1>
+
+    <div id="catalog" class="section">
+        <h2>Catalog</h2>
+        <button onclick="getCatalog()">Get Catalog</button>
+        <pre id="catalogResult"></pre>
+    </div>
+
+    <div id="report" class="section">
+        <h2>Report</h2>
+        <label>
+            Mode:
+            <select id="reportMode">
+                <option value="inventory">Inventory</option>
+                <option value="sales">Sales</option>
+            </select>
+        </label>
+        <button onclick="getReport()">Get Report</button>
+        <pre id="reportResult"></pre>
+    </div>
+
+    <div id="order" class="section">
+        <h2>Place Order</h2>
+        <input id="orderProduct" placeholder="Product">
+        <input id="orderQuantity" type="number" placeholder="Quantity">
+        <button onclick="placeOrder()">Place Order</button>
+        <pre id="orderResult"></pre>
+    </div>
+
+    <div id="inventory" class="section">
+        <h2>Add Inventory</h2>
+        <input id="invProduct" placeholder="Product">
+        <input id="invCategory" placeholder="Category">
+        <input id="invDescription" placeholder="Description">
+        <input id="invCost" type="number" placeholder="Cost" step="0.01">
+        <input id="invQuantity" type="number" placeholder="Quantity">
+        <button onclick="addInventory()">Add Inventory</button>
+        <pre id="inventoryResult"></pre>
+    </div>
+
+    <script>
+        const API_BASE = 'https://uphgj03fd7.execute-api.us-east-1.amazonaws.com';
+
+        async function getCatalog() {
+            try {
+                const res = await fetch(`${API_BASE}/catalog`);
+                const data = await res.json();
+                document.getElementById('catalogResult').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('catalogResult').textContent = 'Error: ' + e;
+            }
+        }
+
+        async function getReport() {
+            const mode = document.getElementById('reportMode').value;
+            try {
+                const res = await fetch(`${API_BASE}/report`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode })
+                });
+                const data = await res.json();
+                document.getElementById('reportResult').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('reportResult').textContent = 'Error: ' + e;
+            }
+        }
+
+        async function placeOrder() {
+            const product = document.getElementById('orderProduct').value;
+            const quantity = parseInt(document.getElementById('orderQuantity').value, 10);
+            try {
+                const res = await fetch(`${API_BASE}/order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product, quantity })
+                });
+                const data = await res.json();
+                document.getElementById('orderResult').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('orderResult').textContent = 'Error: ' + e;
+            }
+        }
+
+        async function addInventory() {
+            const product = document.getElementById('invProduct').value;
+            const category = document.getElementById('invCategory').value;
+            const description = document.getElementById('invDescription').value;
+            const cost = parseFloat(document.getElementById('invCost').value);
+            const quantity = parseInt(document.getElementById('invQuantity').value, 10);
+            try {
+                const res = await fetch(`${API_BASE}/inventory`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product, category, description, cost, quantity })
+                });
+                const data = await res.json();
+                document.getElementById('inventoryResult').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('inventoryResult').textContent = 'Error: ' + e;
+            }
+        }
+    </script>
+</body>
+
+</html>

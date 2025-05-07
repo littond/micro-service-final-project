@@ -1,5 +1,9 @@
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'; // Import necessary AWS SDK packages
-
+const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",                           // or your exact origin
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT"
+};
 // Initialize DynamoDB Client
 const dynamoDbClient = new DynamoDBClient({ region: 'us-east-1' }); // Update with your region
 
@@ -13,6 +17,7 @@ export async function handler(event) {
     if (!product || !category || !description || !cost || !quantity) {
         return {
             statusCode: 400,
+            headers: CORS_HEADERS,
             body: JSON.stringify({
                 message: 'Missing required fields',
                 request: body
@@ -48,6 +53,7 @@ export async function handler(event) {
         result = await dynamoDbClient.send(command2);
         return {
             statusCode: 200,
+            headers: CORS_HEADERS,
             body: JSON.stringify({
                 message: 'Item successfully uploaded to inventory!',
                 returned: result
@@ -56,6 +62,7 @@ export async function handler(event) {
     } catch (err) {
         return {
             statusCode: 200,
+            headers: CORS_HEADERS,
             body: JSON.stringify({
                 message: 'client.send failed',
                 error: err,
