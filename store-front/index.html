@@ -73,7 +73,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://uphgj03fd7.execute-api.us-east-1.amazonaws.com';
+        const API_BASE = 'http://localhost:3000';
 
         async function getCatalog() {
             try {
@@ -88,11 +88,9 @@
         async function getReport() {
             const mode = document.getElementById('reportMode').value;
             try {
-                const res = await fetch(`${API_BASE}/report`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode })
-                });
+                // Move mode into the query string instead of the body
+                const mode = document.getElementById('reportMode').value;
+                const res = await fetch(`${API_BASE}/report?mode=${mode}`);
                 const data = await res.json();
                 document.getElementById('reportResult').textContent = JSON.stringify(data, null, 2);
             } catch (e) {
