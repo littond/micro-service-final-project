@@ -79,7 +79,9 @@
             try {
                 const res = await fetch(`${API_BASE}/catalog`);
                 const data = await res.json();
-                document.getElementById('catalogResult').textContent = JSON.stringify(data, null, 2);
+                // Only show the items in the `available` array, one per line:
+                document.getElementById('catalogResult').textContent =
+                    data.available.join('\n');
             } catch (e) {
                 document.getElementById('catalogResult').textContent = 'Error: ' + e;
             }
@@ -88,11 +90,11 @@
         async function getReport() {
             const mode = document.getElementById('reportMode').value;
             try {
-                // Move mode into the query string instead of the body
-                const mode = document.getElementById('reportMode').value;
                 const res = await fetch(`${API_BASE}/report?mode=${mode}`);
-                const data = await res.json();
-                document.getElementById('reportResult').textContent = JSON.stringify(data, null, 2);
+                const { message, bucket, key } = await res.json();    // grab only what you need
+                // show the message, then the "location" in the bucket
+                document.getElementById('reportResult').textContent =
+                    `${message}\n${bucket}/${key}`;
             } catch (e) {
                 document.getElementById('reportResult').textContent = 'Error: ' + e;
             }
@@ -101,14 +103,19 @@
         async function placeOrder() {
             const product = document.getElementById('orderProduct').value;
             const quantity = parseInt(document.getElementById('orderQuantity').value, 10);
+
             try {
                 const res = await fetch(`${API_BASE}/order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ product, quantity })
                 });
-                const data = await res.json();
-                document.getElementById('orderResult').textContent = JSON.stringify(data, null, 2);
+                const { success, orderId } = await res.json();       // only pull what we need
+                // display either success with ID, or failure
+                document.getElementById('orderResult').textContent =
+                    success
+                        ? `Order placed successfully: ${orderId}`
+                        : 'Order failed';
             } catch (e) {
                 document.getElementById('orderResult').textContent = 'Error: ' + e;
             }
@@ -120,18 +127,21 @@
             const description = document.getElementById('invDescription').value;
             const cost = parseFloat(document.getElementById('invCost').value);
             const quantity = parseInt(document.getElementById('invQuantity').value, 10);
+
             try {
                 const res = await fetch(`${API_BASE}/inventory`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ product, category, description, cost, quantity })
                 });
-                const data = await res.json();
-                document.getElementById('inventoryResult').textContent = JSON.stringify(data, null, 2);
+                const { message } = await res.json();                // <-- only grab `message`
+                document.getElementById('inventoryResult').textContent = message;
             } catch (e) {
                 document.getElementById('inventoryResult').textContent = 'Error: ' + e;
             }
         }
+
+
     </script>
 </body>
 
