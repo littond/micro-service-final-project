@@ -82,13 +82,3 @@ app.put('/inventory', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Proxy server running on port ${PORT}`));
-
-/*
-  To install dependencies:
-    npm install express cors node-fetch
-
-  To run:
-    node server.js
-
-  Your frontend can now call http://localhost:3000/catalog, /report?mode=inventory, etc., without CORS errors.
-*/
